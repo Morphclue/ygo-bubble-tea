@@ -68,7 +68,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m model) View() string {
 	return fmt.Sprintf(
-		"Enter a card name: \n\n%s\n",
+		"Enter a card name: \n%s\n",
 		m.textInput.View(),
 	) + helpStyle("\nPress q or ctrl+c to quit.\n")
 }
