@@ -8,6 +8,8 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
+const baseURL = "https://db.ygoprodeck.com/api/v7/cardinfo.php?name="
+
 var (
 	helpStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Render
 )
