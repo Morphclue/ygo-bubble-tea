@@ -12,7 +12,8 @@ import (
 const baseURL = "https://db.ygoprodeck.com/api/v7/cardinfo.php?fname="
 
 var (
-	helpStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Render
+	focusedStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("205"))
+	helpStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Render
 )
 
 type model struct {
@@ -22,6 +23,7 @@ type model struct {
 func initialModel() model {
 	ti := textinput.New()
 	ti.Placeholder = "Dark Magician"
+	ti.PromptStyle = focusedStyle
 	ti.Focus()
 	ti.CharLimit = 156
 	ti.Width = 20
