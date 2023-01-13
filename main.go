@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"os"
+	"os/exec"
+	"runtime"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
@@ -15,6 +17,18 @@ var (
 	focusedStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("205"))
 	helpStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Render
 )
+
+func clearConsole() {
+	var clearCommand string
+	if runtime.GOOS == "windows" {
+		clearCommand = "cls"
+	} else {
+		clearCommand = "clear"
+	}
+	cmd := exec.Command("cmd", "/c", clearCommand)
+	cmd.Stdout = os.Stdout
+	cmd.Run()
+}
 
 type model struct {
 	textInput textinput.Model
@@ -60,6 +74,7 @@ func (m model) View() string {
 }
 
 func main() {
+	clearConsole()
 	app := tea.NewProgram(initialModel())
 	if _, err := app.Run(); err != nil {
 		fmt.Printf("Error: %v", err)
