@@ -5,6 +5,11 @@ import (
 	"os"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
+)
+
+var (
+	helpStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Render
 )
 
 type model struct {
@@ -36,7 +41,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m model) View() string {
 	s := "Hello, world!"
-	s += "\nPress q or ctrl+c to quit.\n"
+	s += helpStyle("\nPress q or ctrl+c to quit.\n")
 	return s
 }
 
