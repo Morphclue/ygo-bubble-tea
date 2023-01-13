@@ -1,0 +1,14 @@
+### JetBrains
+.idea
+
+### Go template
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+# vendor/
+go.work
+
