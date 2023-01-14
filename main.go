@@ -36,8 +36,11 @@ type model struct {
 }
 
 type Card struct {
-	Id   int    `json:"id"`
-	Name string `json:"name"`
+	Id        int    `json:"id"`
+	Name      string `json:"name"`
+	Type      string `json:"type"`
+	FrameType string `json:"frameType"`
+	Desc      string `json:"desc"`
 }
 
 func getCards(cardName string, m model) {
