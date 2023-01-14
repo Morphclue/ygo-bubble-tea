@@ -15,6 +15,13 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
+type Mode int64
+
+const (
+	Search Mode = iota
+	Select
+	View
+)
 const baseURL = "https://db.ygoprodeck.com/api/v7/cardinfo.php?fname="
 
 var (
@@ -24,6 +31,8 @@ var (
 
 type model struct {
 	textInput textinput.Model
+	cardList  []Card
+	mode      Mode
 }
 
 type Card struct {
@@ -31,7 +40,7 @@ type Card struct {
 	Name string `json:"name"`
 }
 
-func getCards(cardName string) {
+func getCards(cardName string, m model) {
 	url := baseURL + cardName
 	resp, err := http.Get(url)
 	if err != nil {
@@ -47,10 +56,7 @@ func getCards(cardName string) {
 		Data []Card `json:"data"`
 	}
 	json.Unmarshal(body.Bytes(), &data)
-
-	for _, card := range data.Data {
-		fmt.Printf("%d %s ", card.Id, card.Name)
-	}
+	m.cardList = data.Data
 }
 
 func clearConsole() {
@@ -75,6 +81,7 @@ func initialModel() model {
 
 	return model{
 		textInput: ti,
+		mode:      Search,
 	}
 }
 
@@ -91,7 +98,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "ctrl+c", "q":
 			return m, tea.Quit
 		case "enter":
-			getCards(m.textInput.Value())
+			m.mode = Select
+			getCards(m.textInput.Value(), m)
 		}
 	}
 
@@ -100,10 +108,17 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m model) View() string {
-	return fmt.Sprintf(
-		"Enter a card name: \n%s\n",
-		m.textInput.View(),
-	) + helpStyle("\nPress q or ctrl+c to quit.\n")
+	switch m.mode {
+	case Search:
+		return fmt.Sprintf(
+			"Enter a card name: \n%s\n",
+			m.textInput.View(),
+		) + helpStyle("\n enter: choose • q/ctrl+c: quit\n")
+	case Select:
+		return helpStyle("\n enter: choose • ↑/↓: select • q/ctrl+c: quit\n")
+	}
+
+	return "Unknown mode"
 }
 
 func main() {
