@@ -22,6 +22,10 @@ var (
 	helpStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Render
 )
 
+type model struct {
+	textInput textinput.Model
+}
+
 type Card struct {
 	Id   int    `json:"id"`
 	Name string `json:"name"`
@@ -59,10 +63,6 @@ func clearConsole() {
 	cmd := exec.Command("cmd", "/c", clearCommand)
 	cmd.Stdout = os.Stdout
 	cmd.Run()
-}
-
-type model struct {
-	textInput textinput.Model
 }
 
 func initialModel() model {
