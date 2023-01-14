@@ -1,7 +1,11 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"os/exec"
 	"runtime"
@@ -17,6 +21,33 @@ var (
 	focusedStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("205"))
 	helpStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Render
 )
+
+type Card struct {
+	Id   int    `json:"id"`
+	Name string `json:"name"`
+}
+
+func getCards(cardName string) {
+	url := baseURL + cardName
+	resp, err := http.Get(url)
+	if err != nil {
+		fmt.Println(err)
+	}
+	defer resp.Body.Close()
+	var body bytes.Buffer
+	_, err = io.Copy(&body, resp.Body)
+	if err != nil {
+		fmt.Println(err)
+	}
+	var data struct {
+		Data []Card `json:"data"`
+	}
+	json.Unmarshal(body.Bytes(), &data)
+
+	for _, card := range data.Data {
+		fmt.Printf("%d %s ", card.Id, card.Name)
+	}
+}
 
 func clearConsole() {
 	var clearCommand string
@@ -59,6 +90,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.String() {
 		case "ctrl+c", "q":
 			return m, tea.Quit
+		case "enter":
+			getCards(m.textInput.Value())
 		}
 	}
 
