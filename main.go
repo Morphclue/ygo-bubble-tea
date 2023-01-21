@@ -29,18 +29,22 @@ var (
 	helpStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Render
 )
 
-type model struct {
-	textInput textinput.Model
-	cardList  []Card
-	mode      Mode
-}
-
 type Card struct {
 	Id        int    `json:"id"`
 	Name      string `json:"name"`
 	Type      string `json:"type"`
 	FrameType string `json:"frameType"`
 	Desc      string `json:"desc"`
+}
+
+func (c Card) FilterValue() string {
+	return c.Name
+}
+
+type model struct {
+	textInput textinput.Model
+	cardList  []Card
+	mode      Mode
 }
 
 func getCards(cardName string, m model) {
@@ -59,7 +63,7 @@ func getCards(cardName string, m model) {
 		Data []Card `json:"data"`
 	}
 	json.Unmarshal(body.Bytes(), &data)
-	m.cardList = data.Data
+	m.cardList = append(m.cardList, data.Data...)
 }
 
 func clearConsole() {
