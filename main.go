@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"runtime"
 
+	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -25,8 +26,10 @@ const (
 const baseURL = "https://db.ygoprodeck.com/api/v7/cardinfo.php?fname="
 
 var (
-	focusedStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("205"))
-	helpStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Render
+	itemStyle         = lipgloss.NewStyle().PaddingLeft(4)
+	selectedItemStyle = lipgloss.NewStyle().PaddingLeft(2).Foreground(lipgloss.Color("170"))
+	focusedStyle      = lipgloss.NewStyle().Foreground(lipgloss.Color("205"))
+	helpStyle         = lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Render
 )
 
 type Card struct {
@@ -37,17 +40,44 @@ type Card struct {
 	Desc      string `json:"desc"`
 }
 
-func (c Card) FilterValue() string {
-	return c.Name
+type itemDelegate struct{}
+
+func (d itemDelegate) Height() int                               { return 1 }
+func (d itemDelegate) Spacing() int                              { return 0 }
+func (d itemDelegate) Update(msg tea.Msg, m *list.Model) tea.Cmd { return nil }
+func (d itemDelegate) Render(w io.Writer, m list.Model, index int, listItem list.Item) {
+	i, ok := listItem.(*cardListItem)
+	if !ok || i == nil {
+		return
+	}
+
+	str := fmt.Sprintf("%d. %s", index+1, i.card.Name)
+
+	fn := itemStyle.Render
+	if index == m.Index() {
+		fn = func(s string) string {
+			return selectedItemStyle.Render("> " + s)
+		}
+	}
+
+	fmt.Fprint(w, fn(str))
+}
+
+type cardListItem struct {
+	card Card
+}
+
+func (c cardListItem) FilterValue() string {
+	return c.card.Name
 }
 
 type model struct {
 	textInput textinput.Model
-	cardList  []Card
+	cardList  list.Model
 	mode      Mode
 }
 
-func getCards(cardName string, m model) {
+func getCards(cardName string) []list.Item {
 	url := baseURL + cardName
 	resp, err := http.Get(url)
 	if err != nil {
@@ -63,7 +93,11 @@ func getCards(cardName string, m model) {
 		Data []Card `json:"data"`
 	}
 	json.Unmarshal(body.Bytes(), &data)
-	m.cardList = append(m.cardList, data.Data...)
+	cardListItems := make([]list.Item, len(data.Data))
+	for i, card := range data.Data {
+		cardListItems[i] = &cardListItem{card: card}
+	}
+	return cardListItems
 }
 
 func clearConsole() {
@@ -106,7 +140,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		case "enter":
 			m.mode = Select
-			getCards(m.textInput.Value(), m)
+			items := getCards(m.textInput.Value())
+			m.cardList = list.New(items, itemDelegate{}, 20, 14)
 		}
 	}
 
@@ -122,7 +157,10 @@ func (m model) View() string {
 			m.textInput.View(),
 		) + helpStyle("\n enter: choose • q/ctrl+c: quit\n")
 	case Select:
-		return helpStyle("\n enter: choose • ↑/↓: select • q/ctrl+c: quit\n")
+		m.cardList.Title = "Select a card"
+		return fmt.Sprintf(
+			m.cardList.View(),
+		) + helpStyle("\n enter: choose • ↑/↓: select • q/ctrl+c: quit\n")
 	}
 
 	return "Unknown mode"
