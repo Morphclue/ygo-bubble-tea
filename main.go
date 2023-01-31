@@ -145,7 +145,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	}
 
-	m.textInput, cmd = m.textInput.Update(msg)
+	switch m.mode {
+	case Search:
+		m.textInput, cmd = m.textInput.Update(msg)
+	case Select:
+		m.cardList, cmd = m.cardList.Update(msg)
+	}
+
 	return m, cmd
 }
 
