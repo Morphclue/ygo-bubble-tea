@@ -72,9 +72,10 @@ func (c cardListItem) FilterValue() string {
 }
 
 type model struct {
-	textInput textinput.Model
-	cardList  list.Model
-	mode      Mode
+	textInput    textinput.Model
+	cardList     list.Model
+	selectedCard Card
+	mode         Mode
 }
 
 func getCards(cardName string) []list.Item {
@@ -139,9 +140,15 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "ctrl+c", "q":
 			return m, tea.Quit
 		case "enter":
-			m.mode = Select
-			items := getCards(m.textInput.Value())
-			m.cardList = list.New(items, itemDelegate{}, 20, 14)
+			switch m.mode {
+			case Search:
+				m.mode = Select
+				items := getCards(m.textInput.Value())
+				m.cardList = list.New(items, itemDelegate{}, 20, 14)
+			case Select:
+				m.selectedCard = m.cardList.SelectedItem().(*cardListItem).card
+				m.mode = View
+			}
 		}
 	}
 
@@ -167,6 +174,8 @@ func (m model) View() string {
 		return fmt.Sprintf(
 			m.cardList.View(),
 		) + helpStyle("\n enter: choose • ↑/↓: select • q/ctrl+c: quit\n")
+	case View:
+		return fmt.Sprintf("Card: %s", m.selectedCard.Name)
 	}
 
 	return "Unknown mode"
