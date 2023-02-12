@@ -4,18 +4,16 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
-	"os"
-	"os/exec"
-	"runtime"
-	"strconv"
-
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/table"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"io"
+	"net/http"
+	"os"
+	"os/exec"
+	"runtime"
 )
 
 type Mode int64
@@ -40,6 +38,11 @@ type Card struct {
 	Type      string `json:"type"`
 	FrameType string `json:"frameType"`
 	Desc      string `json:"desc"`
+	CardSets  []struct {
+		SetCode       string `json:"set_code"`
+		SetRarityCode string `json:"set_rarity_code"`
+		SetPrice      string `json:"set_price"`
+	} `json:"card_sets"`
 }
 
 type itemDelegate struct{}
@@ -106,16 +109,18 @@ func getCards(cardName string) []list.Item {
 
 func (m model) setInfoTable() table.Model {
 	columns := []table.Column{
-		{Title: "Type", Width: 10},
-		{Title: "Value", Width: 30},
+		{Title: "Code", Width: 10},
+		{Title: "Rarity", Width: 10},
+		{Title: "Price", Width: 10},
 	}
 
-	rows := []table.Row{
-		{"ID", strconv.Itoa(m.selectedCard.Id)},
-		{"Name", m.selectedCard.Name},
-		{"Type", m.selectedCard.Type},
-		{"Frame Type", m.selectedCard.FrameType},
-		{"Description", m.selectedCard.Desc},
+	var rows []table.Row
+	for _, cardSet := range m.selectedCard.CardSets {
+		rows = append(rows, table.Row{
+			cardSet.SetCode,
+			cardSet.SetRarityCode,
+			cardSet.SetPrice,
+		})
 	}
 
 	generatedTable := table.New(
