@@ -9,8 +9,10 @@ import (
 	"os"
 	"os/exec"
 	"runtime"
+	"strconv"
 
 	"github.com/charmbracelet/bubbles/list"
+	"github.com/charmbracelet/bubbles/table"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -74,6 +76,7 @@ func (c cardListItem) FilterValue() string {
 type model struct {
 	textInput    textinput.Model
 	cardList     list.Model
+	infoTable    table.Model
 	selectedCard Card
 	mode         Mode
 }
@@ -99,6 +102,44 @@ func getCards(cardName string) []list.Item {
 		cardListItems[i] = &cardListItem{card: card}
 	}
 	return cardListItems
+}
+
+func (m model) setInfoTable() table.Model {
+	columns := []table.Column{
+		{Title: "Type", Width: 10},
+		{Title: "Value", Width: 30},
+	}
+
+	rows := []table.Row{
+		{"ID", strconv.Itoa(m.selectedCard.Id)},
+		{"Name", m.selectedCard.Name},
+		{"Type", m.selectedCard.Type},
+		{"Frame Type", m.selectedCard.FrameType},
+		{"Description", m.selectedCard.Desc},
+	}
+
+	generatedTable := table.New(
+		table.WithColumns(columns),
+		table.WithRows(rows),
+		table.WithFocused(true),
+		table.WithHeight(5),
+	)
+
+	return generatedTable
+}
+
+func (m model) styleTable() table.Styles {
+	s := table.DefaultStyles()
+	s.Header = s.Header.
+		BorderStyle(lipgloss.NormalBorder()).
+		BorderForeground(lipgloss.Color("240")).
+		BorderBottom(true).
+		Bold(false)
+	s.Selected = s.Selected.
+		Foreground(lipgloss.Color("229")).
+		Background(lipgloss.Color("57")).
+		Bold(false)
+	return s
 }
 
 func clearConsole() {
@@ -147,6 +188,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.cardList = list.New(items, itemDelegate{}, 20, 14)
 			case Select:
 				m.selectedCard = m.cardList.SelectedItem().(*cardListItem).card
+				m.infoTable = m.setInfoTable()
+				m.infoTable.SetStyles(m.styleTable())
 				m.mode = View
 			}
 		}
@@ -157,6 +200,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.textInput, cmd = m.textInput.Update(msg)
 	case Select:
 		m.cardList, cmd = m.cardList.Update(msg)
+	case View:
+		m.infoTable, cmd = m.infoTable.Update(msg)
 	}
 
 	return m, cmd
@@ -175,7 +220,9 @@ func (m model) View() string {
 			m.cardList.View(),
 		) + helpStyle("\n enter: choose • ↑/↓: select • q/ctrl+c: quit\n")
 	case View:
-		return fmt.Sprintf("Card: %s", m.selectedCard.Name)
+		return fmt.Sprintf(
+			m.infoTable.View(),
+		)
 	}
 
 	return "Unknown mode"
