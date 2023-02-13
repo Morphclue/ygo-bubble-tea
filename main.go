@@ -65,7 +65,10 @@ func (d itemDelegate) Render(w io.Writer, m list.Model, index int, listItem list
 		}
 	}
 
-	fmt.Fprint(w, fn(str))
+	_, err := fmt.Fprint(w, fn(str))
+	if err != nil {
+		return
+	}
 }
 
 type cardListItem struct {
@@ -97,7 +100,12 @@ func getCardsCmd(cardName string) tea.Cmd {
 		if err != nil {
 			fmt.Println(err)
 		}
-		defer resp.Body.Close()
+		defer func(Body io.ReadCloser) {
+			err := Body.Close()
+			if err != nil {
+				fmt.Println(err)
+			}
+		}(resp.Body)
 		var body bytes.Buffer
 		_, err = io.Copy(&body, resp.Body)
 		if err != nil {
@@ -106,7 +114,10 @@ func getCardsCmd(cardName string) tea.Cmd {
 		var data struct {
 			Data []Card `json:"data"`
 		}
-		json.Unmarshal(body.Bytes(), &data)
+		err = json.Unmarshal(body.Bytes(), &data)
+		if err != nil {
+			return nil
+		}
 		cardListItems := make([]list.Item, len(data.Data))
 		for i, card := range data.Data {
 			cardListItems[i] = &cardListItem{card: card}
