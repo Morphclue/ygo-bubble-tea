@@ -135,7 +135,7 @@ func (m model) setInfoTable() table.Model {
 		table.WithColumns(columns),
 		table.WithRows(rows),
 		table.WithFocused(true),
-		table.WithHeight(5),
+		table.WithHeight(7),
 	)
 
 	return generatedTable
@@ -199,6 +199,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.infoTable.SetStyles(m.styleTable())
 				m.mode = View
 			}
+		case "b":
+			switch m.mode {
+			case Select:
+				m.mode = Search
+			case View:
+				m.mode = Select
+			}
 		}
 	case getCardsMsg:
 		m.cardList = list.New(msg.cards, itemDelegate{}, 20, 14)
@@ -234,11 +241,11 @@ func (m model) View() string {
 		m.cardList.Title = "Select a card"
 		return fmt.Sprintf(
 			m.cardList.View(),
-		) + helpStyle("\n enter: choose • ↑/↓: select • q/ctrl+c: quit\n")
+		) + helpStyle("\n enter: choose • b: back\n")
 	case View:
 		return fmt.Sprintf(
 			m.infoTable.View(),
-		)
+		) + helpStyle("\n b: back • q/ctrl+c: quit\n")
 	}
 
 	return "Unknown mode"
