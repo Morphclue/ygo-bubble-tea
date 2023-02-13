@@ -4,16 +4,16 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
+	"os"
+
 	"github.com/charmbracelet/bubbles/list"
+	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/bubbles/table"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"io"
-	"net/http"
-	"os"
-	"os/exec"
-	"runtime"
 )
 
 type Mode int64
@@ -80,31 +80,39 @@ type model struct {
 	textInput    textinput.Model
 	cardList     list.Model
 	infoTable    table.Model
+	spinner      spinner.Model
 	selectedCard Card
 	mode         Mode
+	isLoading    bool
 }
 
-func getCards(cardName string) []list.Item {
-	url := baseURL + cardName
-	resp, err := http.Get(url)
-	if err != nil {
-		fmt.Println(err)
+type getCardsMsg struct {
+	cards []list.Item
+}
+
+func getCardsCmd(cardName string) tea.Cmd {
+	return func() tea.Msg {
+		url := baseURL + cardName
+		resp, err := http.Get(url)
+		if err != nil {
+			fmt.Println(err)
+		}
+		defer resp.Body.Close()
+		var body bytes.Buffer
+		_, err = io.Copy(&body, resp.Body)
+		if err != nil {
+			fmt.Println(err)
+		}
+		var data struct {
+			Data []Card `json:"data"`
+		}
+		json.Unmarshal(body.Bytes(), &data)
+		cardListItems := make([]list.Item, len(data.Data))
+		for i, card := range data.Data {
+			cardListItems[i] = &cardListItem{card: card}
+		}
+		return getCardsMsg{cards: cardListItems}
 	}
-	defer resp.Body.Close()
-	var body bytes.Buffer
-	_, err = io.Copy(&body, resp.Body)
-	if err != nil {
-		fmt.Println(err)
-	}
-	var data struct {
-		Data []Card `json:"data"`
-	}
-	json.Unmarshal(body.Bytes(), &data)
-	cardListItems := make([]list.Item, len(data.Data))
-	for i, card := range data.Data {
-		cardListItems[i] = &cardListItem{card: card}
-	}
-	return cardListItems
 }
 
 func (m model) setInfoTable() table.Model {
@@ -147,18 +155,6 @@ func (m model) styleTable() table.Styles {
 	return s
 }
 
-func clearConsole() {
-	var clearCommand string
-	if runtime.GOOS == "windows" {
-		clearCommand = "cls"
-	} else {
-		clearCommand = "clear"
-	}
-	cmd := exec.Command("cmd", "/c", clearCommand)
-	cmd.Stdout = os.Stdout
-	cmd.Run()
-}
-
 func initialModel() model {
 	ti := textinput.New()
 	ti.Placeholder = "Dark Magician"
@@ -166,10 +162,15 @@ func initialModel() model {
 	ti.Focus()
 	ti.CharLimit = 156
 	ti.Width = 20
+	s := spinner.NewModel()
+	s.Spinner = spinner.Dot
+	s.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("205"))
 
 	return model{
 		textInput: ti,
 		mode:      Search,
+		spinner:   s,
+		cardList:  list.NewModel([]list.Item{}, itemDelegate{}, 0, 0),
 	}
 }
 
@@ -179,6 +180,7 @@ func (m model) Init() tea.Cmd {
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
+	var cmds []tea.Cmd
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
@@ -189,8 +191,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			switch m.mode {
 			case Search:
 				m.mode = Select
-				items := getCards(m.textInput.Value())
-				m.cardList = list.New(items, itemDelegate{}, 20, 14)
+				m.isLoading = true
+				return m, tea.Batch(m.spinner.Tick, getCardsCmd(m.textInput.Value()))
 			case Select:
 				m.selectedCard = m.cardList.SelectedItem().(*cardListItem).card
 				m.infoTable = m.setInfoTable()
@@ -198,6 +200,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.mode = View
 			}
 		}
+	case getCardsMsg:
+		m.cardList = list.New(msg.cards, itemDelegate{}, 20, 14)
+		m.isLoading = false
 	}
 
 	switch m.mode {
@@ -209,10 +214,16 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.infoTable, cmd = m.infoTable.Update(msg)
 	}
 
-	return m, cmd
+	var sCmd tea.Cmd
+	m.spinner, sCmd = m.spinner.Update(msg)
+	cmds = append(cmds, sCmd, cmd)
+	return m, tea.Batch(cmds...)
 }
 
 func (m model) View() string {
+	if m.isLoading {
+		return fmt.Sprintf("Loading... %s", m.spinner.View())
+	}
 	switch m.mode {
 	case Search:
 		return fmt.Sprintf(
@@ -234,8 +245,7 @@ func (m model) View() string {
 }
 
 func main() {
-	clearConsole()
-	app := tea.NewProgram(initialModel())
+	app := tea.NewProgram(initialModel(), tea.WithAltScreen())
 	if _, err := app.Run(); err != nil {
 		fmt.Printf("Error: %v", err)
 		os.Exit(1)
