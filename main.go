@@ -162,7 +162,7 @@ func initialModel() model {
 	ti.Focus()
 	ti.CharLimit = 156
 	ti.Width = 20
-	s := spinner.NewModel()
+	s := spinner.New()
 	s.Spinner = spinner.Dot
 	s.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("205"))
 
@@ -170,7 +170,7 @@ func initialModel() model {
 		textInput: ti,
 		mode:      Search,
 		spinner:   s,
-		cardList:  list.NewModel([]list.Item{}, itemDelegate{}, 0, 0),
+		cardList:  list.New([]list.Item{}, itemDelegate{}, 0, 0),
 	}
 }
 
