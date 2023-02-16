@@ -10,7 +10,9 @@ Show
 Type "go run ."  Enter Sleep 3s
 Type "Dark Magician" Sleep 1s Enter Sleep 1s
 Down@1s 4 Up@1s 1 Sleep 1s Enter Sleep 2s
-Type "b"
-Down@1s 3 Up@1s 2 Sleep 1s Enter
+Type@500ms "bb"
+Backspace 14
+Type "Red Eyes" Sleep 1s Enter Sleep 1s
+Enter Sleep 2s
 
 Sleep 5s
