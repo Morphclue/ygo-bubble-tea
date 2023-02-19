@@ -1,4 +1,4 @@
-module ygo-bubble-tea
+module github.com/Morphclue/ygo-bubble-tea
 
 go 1.19
 
