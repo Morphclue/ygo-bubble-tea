@@ -2,8 +2,8 @@ Output assets/demo.gif
 
 Require go
 
-Hide 
-Sleep 1s
+Hide
+Sleep 3s
 Type "clear" Enter Sleep 1s
 Show
 
