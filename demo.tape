@@ -7,7 +7,7 @@ Sleep 3s
 Type "clear" Enter Sleep 1s
 Show
 
-Type "go run ."  Enter Sleep 3s
+Type "go run . -q"  Enter Sleep 3s
 Type "Dark Magician" Sleep 1s Enter Sleep 1s
 Down@1s 4 Up@1s 1 Sleep 1s Enter Sleep 2s
 Type@500ms "bb"
