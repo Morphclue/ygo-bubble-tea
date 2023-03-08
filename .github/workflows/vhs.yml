@@ -12,6 +12,10 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v3
+      - name: Setup Golang with cache
+        uses: magnetikonline/action-golang-cache@v3
+        with:
+          go-version-file: go.mod
       - uses: charmbracelet/vhs-action@v1
         with:
           path: 'demo.tape'
