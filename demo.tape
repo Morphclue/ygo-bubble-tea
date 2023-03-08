@@ -15,4 +15,4 @@ Backspace 14
 Type "Red Eyes" Sleep 1s Enter Sleep 1s
 Enter Sleep 2s
 
-Sleep 5s
+Sleep 3s
