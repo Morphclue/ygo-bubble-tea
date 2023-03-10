@@ -60,8 +60,12 @@ func (d itemDelegate) Render(w io.Writer, m list.Model, index int, listItem list
 
 	fn := itemStyle.Render
 	if index == m.Index() {
-		fn = func(s string) string {
-			return selectedItemStyle.Render("> " + s)
+		fn = func(strings ...string) string {
+			args := make([]interface{}, len(strings)-1)
+			for i, arg := range strings[1:] {
+				args[i] = arg
+			}
+			return selectedItemStyle.Render("> " + fmt.Sprintf(strings[0], args...))
 		}
 	}
 
