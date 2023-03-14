@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/bubbles/table"
 	"github.com/charmbracelet/lipgloss"
 )
@@ -24,4 +25,11 @@ func TableStyles() table.Styles {
 		Background(lipgloss.Color("57")).
 		Bold(false)
 	return s
+}
+
+func Spinner() spinner.Model {
+	return spinner.Model{
+		Spinner: spinner.Dot,
+		Style:   lipgloss.NewStyle().Foreground(lipgloss.Color("205")),
+	}
 }
