@@ -4,11 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/Morphclue/ygo-bubble-tea/ui"
 	"io"
 	"net/http"
 	"os"
 
+	"github.com/Morphclue/ygo-bubble-tea/ui"
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/bubbles/table"
@@ -149,9 +149,6 @@ func (m model) setInfoTable() table.Model {
 
 	return generatedTable
 }
-func (m model) styleTable() table.Styles {
-	return ui.TableStyles()
-}
 
 func initialModel() model {
 	ti := textinput.New()
@@ -192,7 +189,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case Select:
 				m.selectedCard = m.cardList.SelectedItem().(*cardListItem).card
 				m.infoTable = m.setInfoTable()
-				m.infoTable.SetStyles(m.styleTable())
+				m.infoTable.SetStyles(ui.TableStyle())
 				m.mode = View
 			}
 		case "b":

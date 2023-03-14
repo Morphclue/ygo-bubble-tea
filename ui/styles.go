@@ -13,7 +13,7 @@ var (
 	HelpStyle         = lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Render
 )
 
-func TableStyles() table.Styles {
+func TableStyle() table.Styles {
 	s := table.DefaultStyles()
 	s.Header = s.Header.
 		BorderStyle(lipgloss.NormalBorder()).
