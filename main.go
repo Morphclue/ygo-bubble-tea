@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/Morphclue/ygo-bubble-tea/ui"
 	"io"
 	"net/http"
 	"os"
@@ -23,14 +24,8 @@ const (
 	Select
 	View
 )
-const baseURL = "https://db.ygoprodeck.com/api/v7/cardinfo.php?fname="
 
-var (
-	itemStyle         = lipgloss.NewStyle().PaddingLeft(4)
-	selectedItemStyle = lipgloss.NewStyle().PaddingLeft(2).Foreground(lipgloss.Color("170"))
-	focusedStyle      = lipgloss.NewStyle().Foreground(lipgloss.Color("205"))
-	helpStyle         = lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Render
-)
+const baseURL = "https://db.ygoprodeck.com/api/v7/cardinfo.php?fname="
 
 type Card struct {
 	Id        int    `json:"id"`
@@ -58,14 +53,14 @@ func (d itemDelegate) Render(w io.Writer, m list.Model, index int, listItem list
 
 	str := fmt.Sprintf("%d. %s", index+1, i.card.Name)
 
-	fn := itemStyle.Render
+	fn := ui.ItemStyle.Render
 	if index == m.Index() {
 		fn = func(strings ...string) string {
 			args := make([]interface{}, len(strings)-1)
 			for i, arg := range strings[1:] {
 				args[i] = arg
 			}
-			return selectedItemStyle.Render("> " + fmt.Sprintf(strings[0], args...))
+			return ui.SelectedItemStyle.Render("> " + fmt.Sprintf(strings[0], args...))
 		}
 	}
 
@@ -155,25 +150,14 @@ func (m model) setInfoTable() table.Model {
 
 	return generatedTable
 }
-
 func (m model) styleTable() table.Styles {
-	s := table.DefaultStyles()
-	s.Header = s.Header.
-		BorderStyle(lipgloss.NormalBorder()).
-		BorderForeground(lipgloss.Color("240")).
-		BorderBottom(true).
-		Bold(false)
-	s.Selected = s.Selected.
-		Foreground(lipgloss.Color("229")).
-		Background(lipgloss.Color("57")).
-		Bold(false)
-	return s
+	return ui.TableStyles()
 }
 
 func initialModel() model {
 	ti := textinput.New()
 	ti.Placeholder = "Dark Magician"
-	ti.PromptStyle = focusedStyle
+	ti.PromptStyle = ui.FocusedStyle
 	ti.Focus()
 	ti.CharLimit = 156
 	ti.Width = 20
@@ -251,16 +235,16 @@ func (m model) View() string {
 		return fmt.Sprintf(
 			"Enter a card name: \n%s\n",
 			m.textInput.View(),
-		) + helpStyle("\n enter: choose • q/ctrl+c: quit\n")
+		) + ui.HelpStyle("\n enter: choose • q/ctrl+c: quit\n")
 	case Select:
 		m.cardList.Title = "Select a card"
 		return fmt.Sprintf(
 			m.cardList.View(),
-		) + helpStyle("\n enter: choose • b: back\n")
+		) + ui.HelpStyle("\n enter: choose • b: back\n")
 	case View:
 		return fmt.Sprintf(
 			m.infoTable.View(),
-		) + helpStyle("\n b: back • q/ctrl+c: quit\n")
+		) + ui.HelpStyle("\n b: back • q/ctrl+c: quit\n")
 	}
 
 	return "Unknown mode"
