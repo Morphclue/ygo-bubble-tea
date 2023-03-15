@@ -1,13 +1,12 @@
 package main
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
 	"io"
-	"net/http"
 	"os"
 
+	"github.com/Morphclue/ygo-bubble-tea/api"
+	"github.com/Morphclue/ygo-bubble-tea/entity"
 	"github.com/Morphclue/ygo-bubble-tea/ui"
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/spinner"
@@ -23,21 +22,6 @@ const (
 	Select
 	View
 )
-
-const baseURL = "https://db.ygoprodeck.com/api/v7/cardinfo.php?fname="
-
-type Card struct {
-	Id        int    `json:"id"`
-	Name      string `json:"name"`
-	Type      string `json:"type"`
-	FrameType string `json:"frameType"`
-	Desc      string `json:"desc"`
-	CardSets  []struct {
-		SetCode       string `json:"set_code"`
-		SetRarityCode string `json:"set_rarity_code"`
-		SetPrice      string `json:"set_price"`
-	} `json:"card_sets"`
-}
 
 type itemDelegate struct{}
 
@@ -70,7 +54,7 @@ func (d itemDelegate) Render(w io.Writer, m list.Model, index int, listItem list
 }
 
 type cardListItem struct {
-	card Card
+	card entity.Card
 }
 
 func (c cardListItem) FilterValue() string {
@@ -82,7 +66,7 @@ type model struct {
 	cardList     list.Model
 	infoTable    table.Model
 	spinner      spinner.Model
-	selectedCard Card
+	selectedCard entity.Card
 	mode         Mode
 	isLoading    bool
 }
@@ -93,31 +77,12 @@ type getCardsMsg struct {
 
 func getCardsCmd(cardName string) tea.Cmd {
 	return func() tea.Msg {
-		url := baseURL + cardName
-		resp, err := http.Get(url)
-		if err != nil {
-			fmt.Println(err)
-		}
-		defer func(Body io.ReadCloser) {
-			err := Body.Close()
-			if err != nil {
-				fmt.Println(err)
-			}
-		}(resp.Body)
-		var body bytes.Buffer
-		_, err = io.Copy(&body, resp.Body)
-		if err != nil {
-			fmt.Println(err)
-		}
-		var data struct {
-			Data []Card `json:"data"`
-		}
-		err = json.Unmarshal(body.Bytes(), &data)
+		cards, err := api.GetCards(cardName)
 		if err != nil {
 			return nil
 		}
-		cardListItems := make([]list.Item, len(data.Data))
-		for i, card := range data.Data {
+		cardListItems := make([]list.Item, len(cards))
+		for i, card := range cards {
 			cardListItems[i] = &cardListItem{card: card}
 		}
 		return getCardsMsg{cards: cardListItems}
