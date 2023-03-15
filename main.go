@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io"
 	"os"
 
 	"github.com/Morphclue/ygo-bubble-tea/api"
@@ -22,44 +21,6 @@ const (
 	Select
 	View
 )
-
-type itemDelegate struct{}
-
-func (d itemDelegate) Height() int                         { return 1 }
-func (d itemDelegate) Spacing() int                        { return 0 }
-func (d itemDelegate) Update(tea.Msg, *list.Model) tea.Cmd { return nil }
-func (d itemDelegate) Render(w io.Writer, m list.Model, index int, listItem list.Item) {
-	i, ok := listItem.(*cardListItem)
-	if !ok || i == nil {
-		return
-	}
-
-	str := fmt.Sprintf("%d. %s", index+1, i.card.Name)
-
-	fn := ui.ItemStyle.Render
-	if index == m.Index() {
-		fn = func(strings ...string) string {
-			args := make([]interface{}, len(strings)-1)
-			for i, arg := range strings[1:] {
-				args[i] = arg
-			}
-			return ui.SelectedItemStyle.Render("> " + fmt.Sprintf(strings[0], args...))
-		}
-	}
-
-	_, err := fmt.Fprint(w, fn(str))
-	if err != nil {
-		return
-	}
-}
-
-type cardListItem struct {
-	card entity.Card
-}
-
-func (c cardListItem) FilterValue() string {
-	return c.card.Name
-}
 
 type model struct {
 	textInput    textinput.Model
@@ -83,7 +44,7 @@ func getCardsCmd(cardName string) tea.Cmd {
 		}
 		cardListItems := make([]list.Item, len(cards))
 		for i, card := range cards {
-			cardListItems[i] = &cardListItem{card: card}
+			cardListItems[i] = &ui.CardListItem{Card: card}
 		}
 		return getCardsMsg{cards: cardListItems}
 	}
@@ -128,7 +89,7 @@ func initialModel() model {
 		textInput: ti,
 		mode:      Search,
 		spinner:   s,
-		cardList:  list.New([]list.Item{}, itemDelegate{}, 0, 0),
+		cardList:  list.New([]list.Item{}, ui.ItemDelegate{}, 0, 0),
 	}
 }
 
@@ -152,7 +113,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.isLoading = true
 				return m, tea.Batch(m.spinner.Tick, getCardsCmd(m.textInput.Value()))
 			case Select:
-				m.selectedCard = m.cardList.SelectedItem().(*cardListItem).card
+				m.selectedCard = m.cardList.SelectedItem().(*ui.CardListItem).Card
 				m.infoTable = m.setInfoTable()
 				m.infoTable.SetStyles(ui.TableStyle())
 				m.mode = View
@@ -166,7 +127,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		}
 	case getCardsMsg:
-		m.cardList = list.New(msg.cards, itemDelegate{}, 20, 14)
+		m.cardList = list.New(msg.cards, ui.ItemDelegate{}, 20, 14)
 		m.isLoading = false
 	}
 
