@@ -7,7 +7,7 @@ import (
 	"github.com/Morphclue/ygo-bubble-tea/entity"
 )
 
-const baseURL = "https://db.ygoprodeck.com/api/v7/cardinfo.php?fname="
+var baseURL = "https://db.ygoprodeck.com/api/v7/cardinfo.php?fname="
 
 func GetCards(cardName string) ([]entity.Card, error) {
 	url := baseURL + cardName
