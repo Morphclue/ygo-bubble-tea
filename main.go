@@ -36,11 +36,15 @@ type getCardsMsg struct {
 	cards []list.Item
 }
 
+type errorMsg struct {
+	err error
+}
+
 func getCardsCmd(cardName string) tea.Cmd {
 	return func() tea.Msg {
 		cards, err := api.GetCards(cardName)
 		if err != nil {
-			return nil
+			return errorMsg{err: err}
 		}
 		cardListItems := make([]list.Item, len(cards))
 		for i, card := range cards {
