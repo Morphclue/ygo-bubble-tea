@@ -4,7 +4,7 @@ on:
     branches:
       - master
     paths:
-      - 'vhs.yml'
+      - 'vhs-tape.yml'
       - '*.tape'
     workflow_dispatch:
 jobs:
