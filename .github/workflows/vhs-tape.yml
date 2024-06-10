@@ -4,9 +4,8 @@ on:
     branches:
       - master
     paths:
-      - 'vhs-tape.yml'
       - '*.tape'
-    workflow_dispatch:
+  workflow_dispatch:
 jobs:
   vhs:
     runs-on: ubuntu-latest
