@@ -4,6 +4,7 @@ on:
     branches:
       - master
     paths:
+      - 'vhs.yml'
       - '*.tape'
     workflow_dispatch:
 jobs:
@@ -17,7 +18,7 @@ jobs:
         uses: magnetikonline/action-golang-cache@v5
         with:
           go-version-file: go.mod
-      - uses: charmbracelet/vhs-action@ci-colors
+      - uses: charmbracelet/vhs-action@v2.1.0
         with:
           path: 'demo.tape'
         env:
