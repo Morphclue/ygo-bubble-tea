@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"net/http"
+	"net/url"
 
 	"github.com/Morphclue/ygo-bubble-tea/entity"
 )
@@ -10,19 +11,17 @@ import (
 var baseURL = "https://db.ygoprodeck.com/api/v7/cardinfo.php?fname="
 
 func GetCards(cardName string) ([]entity.Card, error) {
-	url := baseURL + cardName
-	resp, err := http.Get(url)
+	endpoint := baseURL + url.QueryEscape(cardName)
+	resp, err := http.Get(endpoint)
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
 
-	var body = resp.Body
 	var data struct {
 		Data []entity.Card `json:"data"`
 	}
-	err = json.NewDecoder(body).Decode(&data)
-	if err != nil {
+	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
 		return nil, err
 	}
 
